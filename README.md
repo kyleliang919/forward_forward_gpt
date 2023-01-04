@@ -14,6 +14,24 @@ Based on my rudimentary understanding of the forward forward algorithm, it's a "
 * torch
 * tqdm
 
+### [Key Changes]
+* [Generating negative samples](https://github.com/kyleliang919/forward_forward_gpt/blob/a60b8fd209f9f822bc4e9e3169255cc09aaccc1e/src/trainer.py#L45)
+```
+    with torch.no_grad():
+        model.eval()
+        generated_ids = model.generate(inputs['input_ids'].to(model.device), attention_mask = inputs['attention_mask'].to(model.device), max_length = inputs['input_ids'].shape[-1] * 2)
+```
+
+* [Local loss]((https://github.com/kyleliang919/forward_forward_gpt/blob/a60b8fd209f9f822bc4e9e3169255cc09aaccc1e/src/modeling_gpt2.py#L440)) in GPT Encoder Block 
+```
+    if self.training:
+        positive = hidden_states[:hidden_states.shape[0]//2]
+        negative = hidden_states[hidden_states.shape[0]//2:]
+        loss = torch.log(1 + torch.exp(torch.cat([
+                -positive + self.threshold,
+                negative - self.threshold]))).mean()
+        loss.backward()
+```
 
 ### Run Example
 
