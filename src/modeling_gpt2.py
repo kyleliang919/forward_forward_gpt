@@ -436,11 +436,6 @@ class GPT2Block(nn.Module):
         # residual connection
         hidden_states = residual + feed_forward_hidden_states
 
-        if use_cache:
-            outputs = (hidden_states,) + outputs
-        else:
-            outputs = (hidden_states,) + outputs[1:]
-
         # perform local backward:
         if self.training:
             positive = hidden_states[:hidden_states.shape[0]//2]
@@ -450,8 +445,11 @@ class GPT2Block(nn.Module):
                     negative - self.threshold]))).mean()
             loss.backward()
 
-        # make sure the hidden states are detached
-        outputs[0] = outputs[0].detach()
+        if use_cache:
+            outputs = (hidden_states.detach(),) + outputs
+        else:
+            outputs = (hidden_states.detach(),) + outputs[1:]
+
         return outputs  # hidden_states, present, (attentions, cross_attentions)
 
 class GPT2PreTrainedModel(PreTrainedModel):
