@@ -18,8 +18,6 @@ class CustomTrainer(Trainer):
         else:
             labels = None
         outputs = model(**inputs)
-        # taking the positive half of the outputs to compute loss for the last layer
-        outputs = outputs[:outputs.shape[0]//2]
 
         # Save past state if it exists
         # TODO: this needs to be fixed and made cleaner later.

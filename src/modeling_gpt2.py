@@ -793,6 +793,8 @@ class GPT2Model(GPT2PreTrainedModel):
 
         output_shape = input_shape + (hidden_states.size(-1),)
         first_hidden_states = self.ln_f(hidden_states).view(output_shape)
+        
+        hidden_states = hidden_states.detach() # detaching to make sure the gradient doesn't flow from the first GPTBlock back to embeddings
 
         presents = () if use_cache else None
         all_self_attentions = () if output_attentions else None
