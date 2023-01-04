@@ -787,7 +787,7 @@ class GPT2Model(GPT2PreTrainedModel):
             inputs_embeds = self.wte(input_ids)
         position_embeds = self.wpe(position_ids)
         hidden_states = inputs_embeds + position_embeds
-        first_hidden_states = self.ln_f(hidden_states).view(output_shape)
+        
         if token_type_ids is not None:
             token_type_embeds = self.wte(token_type_ids)
             hidden_states = hidden_states + token_type_embeds
@@ -795,6 +795,7 @@ class GPT2Model(GPT2PreTrainedModel):
         hidden_states = self.drop(hidden_states)
 
         output_shape = input_shape + (hidden_states.size(-1),)
+        first_hidden_states = self.ln_f(hidden_states).view(output_shape)
 
         presents = () if use_cache else None
         all_self_attentions = () if output_attentions else None
