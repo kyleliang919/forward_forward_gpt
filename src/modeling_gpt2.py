@@ -450,8 +450,8 @@ class GPT2Block(nn.Module):
                     negative - self.threshold]))).mean()
             loss.backward()
 
-        for k,v in outputs:
-            outputs[k] = v.detach()
+        # make sure the hidden states are detached
+        outputs[0] = outputs[0].detach()
         return outputs  # hidden_states, present, (attentions, cross_attentions)
 
 class GPT2PreTrainedModel(PreTrainedModel):
