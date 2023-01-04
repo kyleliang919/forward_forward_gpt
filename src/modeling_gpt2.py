@@ -441,10 +441,6 @@ class GPT2Block(nn.Module):
         else:
             outputs = (hidden_states,) + outputs[1:]
 
-        detached_outputs = [] # detaching outputs to make sure backprop doesn't go beyond one block
-        for each in outputs:
-            detached_outputs.append(each.detach())
-
         # perform local backward:
         if self.training:
             positive = hidden_states[:hidden_states.shape[0]//2]
@@ -453,7 +449,10 @@ class GPT2Block(nn.Module):
                     -positive + self.threshold,
                     negative - self.threshold]))).mean()
             loss.backward()
-        return detached_outputs  # hidden_states, present, (attentions, cross_attentions)
+
+        for k,v in outputs:
+            outputs[k] = v.detach()
+        return outputs  # hidden_states, present, (attentions, cross_attentions)
 
 class GPT2PreTrainedModel(PreTrainedModel):
     """
