@@ -1037,7 +1037,10 @@ class GPT2LMHeadModel(GPT2PreTrainedModel):
             shift_skip_logits = skip_lm_logits[..., :-1, :].contiguous()
             # Flatten the tokens
             loss_fct = CrossEntropyLoss()
-            loss = loss_fct(shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1)) + loss_fct(shift_skip_logits.view(-1, shift_skip_logits.size(-1)), shift_labels.view(-1))
+            if self.training:
+                loss = loss_fct(shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1)) + loss_fct(shift_skip_logits.view(-1, shift_skip_logits.size(-1)), shift_labels.view(-1))
+            else:
+                loss = loss_fct(shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1))
 
         if not return_dict:
             output = (lm_logits,) + transformer_outputs[1:]
