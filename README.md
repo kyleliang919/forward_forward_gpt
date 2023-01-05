@@ -8,6 +8,8 @@ Based on my rudimentary understanding of the forward forward algorithm, it's a "
 ## Problems
 * Forward forward can't train embedding, simply because there is not really a difference between "positive" and "negative", the current hack is adding another "skip connection" from the embeddings directly to the end loss.
 
+* my implementation is slow and not really optimized to utilize the best performance advantage of forward forward algorithm (This will be a future work, you are welcome to contribute and make things run faster.)
+
 ### Dependencies
 
 * transformer

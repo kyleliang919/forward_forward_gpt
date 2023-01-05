@@ -27,8 +27,8 @@ ds_valid = load_dataset("huggingface-course/codeparrot-ds-valid", split="validat
 
 raw_datasets = DatasetDict(
     {
-        "train": ds_train,  # .shuffle().select(range(50000)),
-        "valid": ds_valid,  # .shuffle().select(range(500))
+        "train": ds_train.shuffle().select(range(50000)),
+        "valid": ds_valid.shuffle().select(range(500))
     }
 )
 
@@ -99,8 +99,8 @@ args = TrainingArguments(
     per_device_train_batch_size=32,
     per_device_eval_batch_size=32,
     evaluation_strategy="steps",
-    eval_steps=5000,
-    logging_steps=5000,
+    eval_steps=1000,
+    logging_steps=10,
     gradient_accumulation_steps=8,
     num_train_epochs=1,
     weight_decay=0.1,
