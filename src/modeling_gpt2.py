@@ -22,6 +22,7 @@ from typing import Optional, Tuple, Union
 import torch
 import torch.utils.checkpoint
 from torch import nn
+import torch.nn.functional as F
 from torch.cuda.amp import autocast
 from torch.nn import CrossEntropyLoss
 
@@ -377,6 +378,7 @@ class GPT2Block(nn.Module):
             self.ln_cross_attn = nn.LayerNorm(hidden_size, eps=config.layer_norm_epsilon)
 
         self.mlp = GPT2MLP(inner_dim, config)
+        self.ln_3 = nn.LayerNorm(hidden_size, eps=config.layer_norm_epsilon)
         self.threshold = nn.Parameter(torch.zeros(1))
 
     # implementing the forward forward algorithm by batching the activation of the positive samples and the negative samples:
@@ -436,6 +438,7 @@ class GPT2Block(nn.Module):
         # residual connection
         hidden_states = residual + feed_forward_hidden_states
 
+        hidden_states = F.relu(self.ln_3(hidden_states), inplace=False)
         # perform local backward:
         if self.training:
             positive = hidden_states[:hidden_states.shape[0]//2]
