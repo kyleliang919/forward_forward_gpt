@@ -542,7 +542,7 @@ def main():
     else:
         Trainer_class = Trainer
 
-    training_args['dataloader_drop_last'] = True
+    training_args.dataloader_drop_last = True
     trainer = Trainer_class(
         model=model,
         args=training_args,
