@@ -360,8 +360,8 @@ def main():
     if model_args.config_name:
         config = AutoConfig.from_pretrained(model_args.config_name, **config_kwargs)
     elif model_args.model_name_or_path:
-        if model_args.model_name_or_path.startswith("forward_forward"):
-            model_name_or_path = model_args.model_name_or_path[len("forward_forward"):]
+        if model_args.model_name_or_path.startswith("forward_forward_"):
+            model_name_or_path = model_args.model_name_or_path[len("forward_forward_"):]
         else:
             model_name_or_path = model_args.model_name_or_path
         config = AutoConfig.from_pretrained(model_name_or_path, **config_kwargs)
@@ -390,7 +390,7 @@ def main():
         )
 
     if model_args.model_name_or_path:
-        if model_args.model_name_or_path.startswith("forward_forward"):
+        if model_args.model_name_or_path.startswith("forward_forward_"):
             model = GPT2LMHeadModel(config=config)
         else:
             torch_dtype = (
@@ -533,7 +533,7 @@ def main():
             return metric.compute(predictions=preds, references=labels)
 
     # Initialize our Trainer
-    if model_args.model_name_or_path.startswith("forward_forward"):
+    if model_args.model_name_or_path.startswith("forward_forward_"):
         Trainer_class = CustomTrainer
     else:
         Trainer_class = Trainer
