@@ -1,1 +1,1 @@
-transformer
+git+https://github.com/huggingface/transformers.git
