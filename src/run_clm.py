@@ -382,7 +382,11 @@ def main():
     if model_args.tokenizer_name:
         tokenizer = AutoTokenizer.from_pretrained(model_args.tokenizer_name, **tokenizer_kwargs)
     elif model_args.model_name_or_path:
-        tokenizer = AutoTokenizer.from_pretrained(model_args.model_name_or_path, **tokenizer_kwargs)
+        if model_args.model_name_or_path.startswith("forward_forward_"):
+            model_name_or_path = model_args.model_name_or_path[len("forward_forward_"):]
+        else:
+            model_name_or_path = model_args.model_name_or_path
+        tokenizer = AutoTokenizer.from_pretrained(model_name_or_path, **tokenizer_kwargs)
     else:
         raise ValueError(
             "You are instantiating a new tokenizer from scratch. This is not supported by this script."
