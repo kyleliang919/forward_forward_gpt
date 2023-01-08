@@ -45,9 +45,9 @@ class CustomTrainer(Trainer):
         with torch.no_grad():
             model.eval()
             if type(model) is torch.nn.DataParallel:
-                generated_ids = model.module.generate(inputs['input_ids'][:-1].to(model.device), attention_mask = inputs['attention_mask'][:-1].to(model.device), max_length = inputs['input_ids'].shape[-1] * 2, pad_token_id=self.tokenizer.eos_token_id)
+                generated_ids = model.module.generate(inputs['input_ids'][:-1].to(model.module.device), attention_mask = inputs['attention_mask'][:-1].to(model.module.device), max_length = inputs['input_ids'].shape[-1], pad_token_id=self.tokenizer.eos_token_id)
             else:
-                generated_ids = model.generate(inputs['input_ids'][:-1].to(model.device), attention_mask = inputs['attention_mask'][:-1].to(model.device), max_length = inputs['input_ids'].shape[-1] * 2, pad_token_id=self.tokenizer.eos_token_id)
+                generated_ids = model.generate(inputs['input_ids'][:-1].to(model.device), attention_mask = inputs['attention_mask'][:-1].to(model.device), max_length = inputs['input_ids'].shape[-1], pad_token_id=self.tokenizer.eos_token_id)
         model.train()
         inputs['input_ids'] = torch.cat([inputs['input_ids'], generated_ids], dim = 0)
         inputs['attention_mask'] = torch.cat([inputs['attention_mask'].to(model.device), inputs['attention_mask'].to(model.device)], dim = 0)
