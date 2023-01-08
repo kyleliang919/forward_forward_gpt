@@ -45,7 +45,6 @@ class CustomTrainer(Trainer):
         with torch.no_grad():
             model.eval()
             generated_ids = model.generate(inputs['input_ids'].to(model.device), attention_mask = inputs['attention_mask'].to(model.device), max_length = inputs['input_ids'].shape[-1] * 2, pad_token_id=self.tokenizer.eos_token_id)
-        
         model.train()
         inputs['input_ids'] = torch.cat([inputs['input_ids'], generated_ids[:, inputs['input_ids'].shape[-1]:]], dim = 0)
         inputs['attention_mask'] = torch.cat([inputs['attention_mask'].to(model.device), inputs['attention_mask'].to(model.device)], dim = 0)
