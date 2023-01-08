@@ -201,9 +201,6 @@ class DataTrainingArguments:
     keep_linebreaks: bool = field(
         default=True, metadata={"help": "Whether to keep line breaks when using TXT files or not."}
     )
-    dataloader_drop_last: bool = field(
-        default=True, metadata={"help": "Whether to drop last batch."}
-    )
 
     def __post_init__(self):
         if self.dataset_name is None and self.train_file is None and self.validation_file is None:
