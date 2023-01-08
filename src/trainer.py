@@ -50,7 +50,7 @@ class CustomTrainer(Trainer):
                 generated_ids = model.generate(inputs['input_ids'][:,:-1].to(model.device), attention_mask = inputs['attention_mask'][:,:-1].to(model.device), max_length = inputs['input_ids'].shape[-1], pad_token_id=self.tokenizer.eos_token_id)
         model.train()
         inputs['input_ids'] = torch.cat([inputs['input_ids'], generated_ids], dim = 0)
-        inputs['attention_mask'] = torch.cat([inputs['attention_mask'].to(model.device), inputs['attention_mask'].to(model.device)], dim = 0)
+        inputs['attention_mask'] = torch.cat([inputs['attention_mask'].to(model.module.device), inputs['attention_mask'].to(model.module.device)], dim = 0)
 
         with self.compute_loss_context_manager():
             loss = self.compute_loss(model, inputs)
