@@ -41,7 +41,6 @@ from transformers.utils import (
 )
 from transformers.utils.model_parallel_utils import assert_device_map, get_device_map
 from transformers.models.gpt2.configuration_gpt2 import GPT2Config
-from transformers.utils import ModelOutputWithPastAndCrossAttentions
 
 logger = logging.get_logger(__name__)
 
@@ -873,7 +872,7 @@ class GPT2Model(GPT2PreTrainedModel):
                 if v is not None
             )
 
-        return ModelOutputWithPastAndCrossAttentions(
+        return BaseModelOutputWithPastAndCrossAttentions(
             last_hidden_state=hidden_states,
             past_key_values=presents,
             hidden_states=all_hidden_states,
