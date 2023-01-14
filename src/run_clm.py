@@ -130,8 +130,7 @@ class ModelArguments:
             ),
             "choices": ["auto", "bfloat16", "float16", "float32"],
         },
-    ),
-
+    )
     context_ratio: Optional[float] = field(
         default=0.5,
         metadata={
@@ -402,6 +401,7 @@ def main():
             "You can do it from another script, save it, and load it from here, using --tokenizer_name."
         )
 
+    config.context_ratio = model_args.context_ratio
     if model_args.model_name_or_path:
         if model_args.model_name_or_path.startswith("forward_forward_"):
             model = GPT2LMHeadModel(config=config)
