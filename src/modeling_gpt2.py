@@ -41,17 +41,7 @@ from transformers.utils import (
 )
 from transformers.utils.model_parallel_utils import assert_device_map, get_device_map
 from transformers.models.gpt2.configuration_gpt2 import GPT2Config
-from dataclasses import dataclass
-from transformers.utils import ModelOutput
-
-@dataclass
-class CustomModelOutputWithPastAndCrossAttentions(ModelOutput):
-    last_hidden_state: torch.FloatTensor = None
-    past_key_values: Optional[Tuple[Tuple[torch.FloatTensor]]] = None
-    hidden_states: Optional[Tuple[torch.FloatTensor]] = None
-    attentions: Optional[Tuple[torch.FloatTensor]] = None
-    cross_attentions: Optional[Tuple[torch.FloatTensor]] = None
-    first_hidden_state: torch.FloatTensor = None
+from transformers.utils import ModelOutputWithPastAndCrossAttentions
 
 logger = logging.get_logger(__name__)
 
@@ -796,7 +786,7 @@ class GPT2Model(GPT2PreTrainedModel):
         hidden_states = self.drop(hidden_states)
 
         output_shape = input_shape + (hidden_states.size(-1),)
-        first_hidden_states = self.ln_f(hidden_states).view(output_shape)
+        
 
         presents = () if use_cache else None
         all_self_attentions = () if output_attentions else None
@@ -883,13 +873,12 @@ class GPT2Model(GPT2PreTrainedModel):
                 if v is not None
             )
 
-        return CustomModelOutputWithPastAndCrossAttentions(
+        return ModelOutputWithPastAndCrossAttentions(
             last_hidden_state=hidden_states,
             past_key_values=presents,
             hidden_states=all_hidden_states,
             attentions=all_self_attentions,
-            cross_attentions=all_cross_attentions,
-            first_hidden_state=first_hidden_states,
+            cross_attentions=all_cross_attentions
         )
 
 
@@ -1019,30 +1008,22 @@ class GPT2LMHeadModel(GPT2PreTrainedModel):
         )
         hidden_states = transformer_outputs[0]
 
-        first_hidden_states = transformer_outputs[-1] # getting the last state of the transformer output
-
         # Set device for model parallelism
         if self.model_parallel:
             torch.cuda.set_device(self.transformer.first_device)
             hidden_states = hidden_states.to(self.lm_head.weight.device)
-            first_hidden_states = first_hidden_states.to(self.lm_head.weight.device)
         
         lm_logits = self.lm_head(hidden_states)
-        skip_lm_logits = self.lm_head(first_hidden_states)
         loss = None
         if labels is not None:
             # Shift so that tokens < n predict n
             if self.training:
                 lm_logits = lm_logits[:lm_logits.shape[0]//2]
-                skip_lm_logits = skip_lm_logits[:skip_lm_logits.shape[0]//2]
             shift_logits = lm_logits[..., :-1, :].contiguous()
             shift_labels = labels[..., 1:].contiguous()
             # Flatten the tokens
             loss_fct = CrossEntropyLoss()
-            if self.training:
-                loss = loss_fct(shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1)) + loss_fct(skip_lm_logits.view(-1, skip_lm_logits.size(-1)), labels.view(-1))
-            else:
-                loss = loss_fct(shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1))
+            loss = loss_fct(shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1))
 
         if not return_dict:
             output = (lm_logits,) + transformer_outputs[1:]
