@@ -628,7 +628,6 @@ class GPT2Model(GPT2PreTrainedModel):
         super().__init__(config)
 
         self.embed_dim = config.hidden_size
-        breakpoint ()
         self.wte = nn.Embedding(config.vocab_size, self.embed_dim)
         self.wpe = nn.Embedding(config.max_position_embeddings, self.embed_dim)
 
@@ -640,7 +639,7 @@ class GPT2Model(GPT2PreTrainedModel):
         self.model_parallel = False
         self.device_map = None
         self.gradient_checkpointing = False
-
+        
         # Initialize weights and apply final processing
         self.post_init()
 
@@ -788,7 +787,7 @@ class GPT2Model(GPT2PreTrainedModel):
         if inputs_embeds is None:
             inputs_embeds = self.wte(input_ids)
         position_embeds = self.wpe(position_ids)
-        hidden_states = inputs_embeds + position_embeds
+        hidden_states = inputs_embeds.detach() + position_embeds  # detaching to make sure the gradient doesn't flow from the first GPTBlock back to embeddings
         
         if token_type_ids is not None:
             token_type_embeds = self.wte(token_type_ids)
@@ -798,8 +797,6 @@ class GPT2Model(GPT2PreTrainedModel):
 
         output_shape = input_shape + (hidden_states.size(-1),)
         first_hidden_states = self.ln_f(hidden_states).view(output_shape)
-        
-        hidden_states = hidden_states.detach() # detaching to make sure the gradient doesn't flow from the first GPTBlock back to embeddings
 
         presents = () if use_cache else None
         all_self_attentions = () if output_attentions else None
@@ -910,6 +907,7 @@ class GPT2LMHeadModel(GPT2PreTrainedModel):
         super().__init__(config)
         self.transformer = GPT2Model(config)
         self.lm_head = nn.Linear(config.n_embd, config.vocab_size, bias=False)
+        self.lm_head.weight = self.transformer.wte.weight
         self.context_ratio = config.context_ratio
         # Model parallel
         self.model_parallel = False
