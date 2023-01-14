@@ -130,6 +130,15 @@ class ModelArguments:
             ),
             "choices": ["auto", "bfloat16", "float16", "float32"],
         },
+    ),
+
+    context_ratio: Optional[float] = field(
+        default=0.5,
+        metadata={
+            "help": (
+                "This determine how much is fake in the negative sample generated."
+            )
+        },
     )
 
     def __post_init__(self):

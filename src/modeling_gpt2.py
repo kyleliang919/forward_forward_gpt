@@ -378,8 +378,8 @@ class GPT2Block(nn.Module):
             self.ln_cross_attn = nn.LayerNorm(hidden_size, eps=config.layer_norm_epsilon)
 
         self.mlp = GPT2MLP(inner_dim, config)
-        self.ln_3 = nn.LayerNorm(hidden_size, eps=config.layer_norm_epsilon)
         self.threshold = nn.Parameter(torch.zeros(1))
+        self.context_ratio = config.context_ratio
 
     # implementing the forward forward algorithm by batching the activation of the positive samples and the negative samples:
     # the first half of the batch is positive sample from the real data;
@@ -396,7 +396,7 @@ class GPT2Block(nn.Module):
         output_attentions: Optional[bool] = False,
     ) -> Union[Tuple[torch.Tensor], Optional[Tuple[torch.Tensor, Tuple[torch.FloatTensor, ...]]]]:
         residual = hidden_states
-        hidden_states = self.ln_1(hidden_states)
+        #hidden_states = self.ln_1(hidden_states) # change the formulation to post norm to fit the forward forward restrictions
         attn_outputs = self.attn(
             hidden_states,
             layer_past=layer_past,
@@ -409,6 +409,7 @@ class GPT2Block(nn.Module):
         outputs = attn_outputs[1:]
         # residual connection
         hidden_states = attn_output + residual
+        hidden_states = self.ln_1(hidden_states)
 
         if encoder_hidden_states is not None:
             # add one self-attention block for cross-attention
@@ -433,21 +434,22 @@ class GPT2Block(nn.Module):
             outputs = outputs + cross_attn_outputs[2:]  # add cross attentions if we output attention weights
 
         residual = hidden_states
-        hidden_states = self.ln_2(hidden_states)
+        #hidden_states = self.ln_2(hidden_states) 
         feed_forward_hidden_states = self.mlp(hidden_states)
         # residual connection
         hidden_states = residual + feed_forward_hidden_states
 
-        hidden_states = F.relu(self.ln_3(hidden_states), inplace=False)
         # perform local backward:
         if self.training:
-            positive = hidden_states[:hidden_states.shape[0]//2]
-            negative = hidden_states[hidden_states.shape[0]//2:]
+            context_length = int(hidden_states.shape[1] * self.context_ratio)
+            positive = hidden_states[:hidden_states.shape[0]//2, context_length:]
+            negative = hidden_states[hidden_states.shape[0]//2:, context_length:]
             loss = torch.log(1 + torch.exp(torch.cat([
                     -positive + self.threshold,
                     negative - self.threshold]))).mean()
             loss.backward()
-
+        
+        hidden_states = self.ln_2(hidden_states) # changing the location of the second LN to make it post norm to satisfy forward forwad's restrctions.
         if use_cache:
             outputs = (hidden_states.detach(),) + outputs
         else:
@@ -908,7 +910,7 @@ class GPT2LMHeadModel(GPT2PreTrainedModel):
         super().__init__(config)
         self.transformer = GPT2Model(config)
         self.lm_head = nn.Linear(config.n_embd, config.vocab_size, bias=False)
-
+        self.context_ratio = config.context_ratio
         # Model parallel
         self.model_parallel = False
         self.device_map = None
