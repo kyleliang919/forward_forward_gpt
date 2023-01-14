@@ -628,7 +628,7 @@ class GPT2Model(GPT2PreTrainedModel):
         super().__init__(config)
 
         self.embed_dim = config.hidden_size
-
+        breakpoint ()
         self.wte = nn.Embedding(config.vocab_size, self.embed_dim)
         self.wpe = nn.Embedding(config.max_position_embeddings, self.embed_dim)
 
@@ -1039,11 +1039,10 @@ class GPT2LMHeadModel(GPT2PreTrainedModel):
                 skip_lm_logits = skip_lm_logits[:skip_lm_logits.shape[0]//2]
             shift_logits = lm_logits[..., :-1, :].contiguous()
             shift_labels = labels[..., 1:].contiguous()
-            shift_skip_logits = skip_lm_logits[..., :-1, :].contiguous()
             # Flatten the tokens
             loss_fct = CrossEntropyLoss()
             if self.training:
-                loss = loss_fct(shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1)) + loss_fct(shift_skip_logits.view(-1, shift_skip_logits.size(-1)), shift_labels.view(-1))
+                loss = loss_fct(shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1)) + loss_fct(skip_lm_logits.view(-1, skip_lm_logits.size(-1)), labels.view(-1))
             else:
                 loss = loss_fct(shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1))
 
